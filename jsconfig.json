@@ -1,9 +1,12 @@
-﻿{
+{
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    }
+      "@/*": ["./*"]
+    },
+    "ignoreDeprecations": "6.0"
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".expo"]
 }
+
+// Refactor: optimize asset extension resolution
