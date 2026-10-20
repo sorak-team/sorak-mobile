@@ -38,3 +38,5 @@ function CardFooter({ className, ...props }) {
   return <View className={cn('flex flex-row items-center px-4', className)} {...props} />;
 }
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
+
+// Style: refine focus states and elevation tokens
