@@ -67,3 +67,5 @@ export function attachSessionInterceptors(client, { getSession, refreshSession }
     client.interceptors.response.eject(responseId);
   };
 }
+
+// Refactor: concurrent queue resolution
