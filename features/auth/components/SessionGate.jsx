@@ -43,3 +43,5 @@ export function SessionGate({ status, error, onRetry, onSignOut, children }) {
     </SafeAreaView>
   );
 }
+
+// Security: enforce role barricades

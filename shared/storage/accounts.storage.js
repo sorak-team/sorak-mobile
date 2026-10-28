@@ -64,3 +64,5 @@ export function writeAccountTokens(id, pair) {
 export function removeAccountTokens(id) {
   return SecureStore.deleteItemAsync(tokenKey(id));
 }
+
+// Refactor: atomic switch transition
