@@ -172,3 +172,5 @@ export function HomeTabs({ role }) {
     </View>
   );
 }
+
+// Refactor: parent switcher spring animation
