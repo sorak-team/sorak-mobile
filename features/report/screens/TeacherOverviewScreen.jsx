@@ -162,3 +162,9 @@ export default function TeacherOverviewScreen() {
 }
 
 // Feature: embed summary cards in roster
+
+// Feature: loading skeleton grid
+
+// Feature: real-time search and filter chips
+
+// Refactor: quick contact bottom sheet trigger

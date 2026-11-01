@@ -27,3 +27,5 @@ export function StudentSummary({ student, className }) {
     </View>
   );
 }
+
+// Refactor: quick contact bottom sheet trigger
