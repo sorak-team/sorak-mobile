@@ -51,3 +51,9 @@ export const GROWTH_COLORS = {
   background: '#FFFFFF',
   text: '#334155',
 };
+
+// UI: SVG percentile curve canvas
+
+// Feature: data point touch overlay
+
+// Performance: useMemo path memoization

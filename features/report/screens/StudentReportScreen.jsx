@@ -12,3 +12,5 @@ export default function StudentReportScreen() {
 }
 
 // Refactor: emergency calling action trigger
+
+// Integration: embed health summary tab
