@@ -107,3 +107,5 @@ export function reportError(error) {
       : 'Chưa kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
   return error?.message || 'Không thể tải báo cáo. Hãy thử lại.';
 }
+
+// Reference: WHO LMS percentiles
