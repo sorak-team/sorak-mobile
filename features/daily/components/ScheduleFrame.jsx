@@ -147,3 +147,5 @@ export function EmptyFrames({ frames, isParent, now, defaultOpen }) {
     </Collapsible>
   );
 }
+
+// Refactor: pulsing current hour marker
