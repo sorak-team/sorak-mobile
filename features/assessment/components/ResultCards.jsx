@@ -170,3 +170,5 @@ export function SemesterResultCard({ title, code, avatarUrl, record, parent }) {
     </Card>
   );
 }
+
+// Refactor: lotus award badge animation
