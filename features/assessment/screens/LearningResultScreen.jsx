@@ -351,3 +351,5 @@ export default function LearningResultScreen() {
 }
 
 // Refactor: lotus award badge animation
+
+// Feature: 5 developmental domains criteria badge
