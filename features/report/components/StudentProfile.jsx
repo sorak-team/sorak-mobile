@@ -90,5 +90,3 @@ export function StudentProfile({ report }) {
     </View>
   );
 }
-
-// Refactor: emergency calling action trigger

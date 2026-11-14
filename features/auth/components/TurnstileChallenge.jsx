@@ -288,5 +288,3 @@ function SchoolBanner() {
     </View>
   );
 }
-
-// Refactor: harden token handshake bridge

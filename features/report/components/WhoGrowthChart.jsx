@@ -247,7 +247,3 @@ function SvgTick({ age, x, top, bottom }) {
     </>
   );
 }
-
-// Feature: data point touch overlay
-
-// Performance: useMemo path memoization

@@ -270,5 +270,3 @@ function DailyRecordsForm({ kind, date, slotId }) {
     </View>
   );
 }
-
-// Refactor: optimistic status mutation

@@ -145,5 +145,3 @@ function Button({ className, variant, size, ...props }) {
   );
 }
 export { Button, buttonTextVariants, buttonVariants };
-
-// Style: refine focus states and elevation tokens

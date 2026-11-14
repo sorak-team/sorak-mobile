@@ -213,5 +213,3 @@ function matchesReceipt(requests, receipt) {
         (receipt.studentCode && item.student?.code === receipt.studentCode))
   );
 }
-
-// Feature: rejection reason text modal

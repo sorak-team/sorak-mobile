@@ -8,5 +8,3 @@ export default function ParentReportScreen() {
   const report = useParentReport(semester);
   return <StudentReport {...report} semester={semester} onSemesterChange={setSemester} />;
 }
-
-// Integration: embed health summary tab

@@ -155,5 +155,3 @@ function BottomSheetOption({
 }
 
 export { BottomSheet, BottomSheetModalProvider, BottomSheetOption, BottomSheetScrollView };
-
-// Refactor: optimize gestures and spring tension

@@ -143,5 +143,3 @@ export function ScheduleCalendar({ date, today, onChange }) {
     </View>
   );
 }
-
-// Refactor: pulsing current hour marker

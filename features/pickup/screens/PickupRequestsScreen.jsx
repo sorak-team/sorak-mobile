@@ -260,5 +260,3 @@ export default function PickupRequestsScreen() {
     </View>
   );
 }
-
-// Polish: delegate photo aspect ratio clamp

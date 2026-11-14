@@ -170,7 +170,3 @@ export function SemesterResultCard({ title, code, avatarUrl, record, parent }) {
     </Card>
   );
 }
-
-// Refactor: lotus award badge animation
-
-// Feature: 5 developmental domains criteria badge

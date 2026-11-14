@@ -147,7 +147,3 @@ export function PickupRequestCard({
     </Card>
   );
 }
-
-// Feature: rejection reason text modal
-
-// Polish: delegate photo aspect ratio clamp
