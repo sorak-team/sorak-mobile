@@ -10,7 +10,3 @@ export default function StudentReportScreen() {
   const report = useStudentReport(typeof studentId === 'string' ? studentId : null, semester);
   return <StudentReport {...report} semester={semester} onSemesterChange={setSemester} />;
 }
-
-// Refactor: emergency calling action trigger
-
-// Integration: embed health summary tab

@@ -113,5 +113,3 @@ export function usePickupPhoto() {
     ready: !asset || Boolean(url),
   };
 }
-
-// Validation: national ID regex

@@ -147,5 +147,3 @@ export function DailyRecordCard({ kind, row, editable, onChange }) {
     </Card>
   );
 }
-
-// Refactor: optimistic status mutation

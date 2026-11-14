@@ -103,5 +103,3 @@ export function HomeHeader({
     </SafeAreaView>
   );
 }
-
-// Refactor: polish tab item alignments

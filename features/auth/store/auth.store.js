@@ -10,5 +10,3 @@ export const useAuthStore = create((set) => ({
   loginSucceeded: false,
   dismissLoginSuccess: () => set({ loginSucceeded: false }),
 }));
-
-// Refactor: atomic switch transition

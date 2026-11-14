@@ -56,5 +56,3 @@ function Toaster(props) {
 }
 
 export { Toaster };
-
-// Refactor: optimize gestures and spring tension

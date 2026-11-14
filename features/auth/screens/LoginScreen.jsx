@@ -396,5 +396,3 @@ function RoleBanner({ role }) {
     </View>
   );
 }
-
-// Refactor: harden token handshake bridge
