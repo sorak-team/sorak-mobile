@@ -43,6 +43,11 @@ export default function TimetableScreen() {
   const pickup = usePickupRequests({ date });
   const pendingCount = pickup.query.data?.stats?.pendingCount;
   const data = query.data;
+  const holidays = data?.holidays || data?.timetable?.holidays || [];
+  const currentHoliday = holidays.find((h) => {
+    if (h.isTeachingAllowed) return false;
+    return Boolean(h.startDate && h.endDate && date >= h.startDate && date <= h.endDate);
+  });
   const noParentClass = isParent && data && (!data.student || !data.classInfo);
   const ready = Boolean(data && !error && !query.isError && !noClass && !noParentClass);
   const frames = ready ? dayFrames(data, date, isParent) : [];
@@ -104,7 +109,11 @@ export default function TimetableScreen() {
             ) : null}
             <View className="flex-row flex-wrap items-center gap-2 pt-1">
               <Text className="text-sm font-semibold">{dayTitle(date, locale)}</Text>
-              {date === today ? (
+              {currentHoliday ? (
+                <Badge variant="destructive">
+                  <Text>{currentHoliday.name || t('Ngày nghỉ')}</Text>
+                </Badge>
+              ) : date === today ? (
                 <Badge variant="secondary">
                   <Text>{t('Hôm nay')}</Text>
                 </Badge>
@@ -126,8 +135,18 @@ export default function TimetableScreen() {
             loading={query.isPending}
             error={query.isError ? timetableError(query.error) : ''}
             onRetry={query.isError ? query.refetch : undefined}
-            title={noParentClass ? 'Chưa có lớp học của con' : 'Chưa có lịch cho ngày này'}
-            description="Bạn có thể chọn ngày khác hoặc kéo xuống để tải lại."
+            title={
+              currentHoliday
+                ? (currentHoliday.name || t('Ngày nghỉ'))
+                : noParentClass
+                  ? 'Chưa có lớp học của con'
+                  : 'Chưa có lịch cho ngày này'
+            }
+            description={
+              currentHoliday
+                ? 'Học sinh được nghỉ theo lịch của nhà trường.'
+                : 'Bạn có thể chọn ngày khác hoặc kéo xuống để tải lại.'
+            }
           />
         }
         renderItem={({ item }) =>

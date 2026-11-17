@@ -99,13 +99,18 @@ export function dayOverview(data, date, isParent) {
       pickup: { state: recordState(stats.isDismissalRecorded), count: count(stats.dismissedCount) },
     };
   }
-  const attendance = data.attendance.records.find((record) => record.isoDate === date);
-  const health = data.health.history.filter((record) => record.rawDate?.slice(0, 10) === date);
+  const attendance = data.attendance?.records?.find((record) => record.isoDate === date);
+  const health = data.health?.history?.filter((record) => record.rawDate?.slice(0, 10) === date) || [];
+  const holiday = (data.holidays || data.timetable?.holidays || []).find((h) => {
+    if (h.isTeachingAllowed) return false;
+    return Boolean(h.startDate && h.endDate && date >= h.startDate && date <= h.endDate);
+  });
   return {
+    holiday: holiday ? { name: holiday.name } : null,
     attendance: {
-      state: attendance ? 'done' : 'todo',
-      label: ATTENDANCE_LABELS[attendance?.rawStatus] || '',
-      rawLabel: attendance?.statusLabel || '',
+      state: attendance ? 'done' : holiday ? 'holiday' : 'todo',
+      label: attendance ? (ATTENDANCE_LABELS[attendance?.rawStatus] || '') : (holiday ? (holiday.name || 'Ngày nghỉ') : ''),
+      rawLabel: attendance?.statusLabel || (holiday ? 'Ngày nghỉ' : ''),
     },
     health: { state: health.length ? 'done' : 'todo' },
     pickup: {
