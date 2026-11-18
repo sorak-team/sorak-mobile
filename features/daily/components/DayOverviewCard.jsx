@@ -87,12 +87,21 @@ export function DayOverviewCard({
   let pickupMeta;
   let pickupRight = null;
   if (isParent) {
-    attendanceMeta =
-      attendance.state === 'done'
-        ? t(attendance.label) || attendance.rawLabel || t('Đã ghi nhận')
-        : t('Chưa ghi nhận');
-    // Dòng phụ đã nêu trạng thái; bên phải chỉ nhắc khi chưa ghi để tránh lặp chữ.
-    attendanceRight = attendance.state === 'done' ? null : <Pending label={t('Chưa ghi')} />;
+    if (attendance.state === 'holiday') {
+      attendanceMeta = attendance.rawLabel || t('Ngày nghỉ');
+      attendanceRight = (
+        <Badge variant="secondary">
+          <Text>{attendance.label || t('Ngày nghỉ')}</Text>
+        </Badge>
+      );
+    } else {
+      attendanceMeta =
+        attendance.state === 'done'
+          ? t(attendance.label) || attendance.rawLabel || t('Đã ghi nhận')
+          : t('Chưa ghi nhận');
+      // Dòng phụ đã nêu trạng thái; bên phải chỉ nhắc khi chưa ghi để tránh lặp chữ.
+      attendanceRight = attendance.state === 'done' ? null : <Pending label={t('Chưa ghi')} />;
+    }
     healthMeta = t(health.state === 'done' ? 'Đã có số đo' : 'Chưa ghi nhận');
     healthRight = health.state === 'done' ? null : <Pending label={t('Chưa ghi')} />;
     pickupMeta =
