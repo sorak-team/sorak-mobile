@@ -10,11 +10,14 @@ export async function registerPushDevice(device, accessToken) {
   if (data?.success !== true) throw new Error('Push registration was not confirmed');
 }
 
-export async function unregisterPushDevice(deviceToken, accessToken) {
-  const { data } = await apiClient.delete(path, {
-    data: { deviceToken },
+export async function unregisterPushDevice(deviceToken, accessToken, refreshToken) {
+  const config = {
+    data: { deviceToken, refreshToken },
     skipSession: true,
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  };
+  if (accessToken) {
+    config.headers = { Authorization: `Bearer ${accessToken}` };
+  }
+  const { data } = await apiClient.delete(path, config);
   if (data?.success !== true) throw new Error('Push removal was not confirmed');
 }
