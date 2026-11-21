@@ -12,19 +12,17 @@ import { describeAccount } from '@/features/auth/utils/linked-accounts';
 import { PushPermissionSheet } from '@/features/notification/components/PushPermissionSheet';
 import { useNotificationInbox } from '@/features/notification/hooks/useNotifications';
 import { usePushSettings } from '@/features/notification/hooks/usePushPreference';
-import { FONT_FAMILY } from '@/lib/fonts';
-import { THEME } from '@/lib/theme';
 import { useTranslation } from '@/shared/i18n/useLanguage';
 
 import { AccountSwitchSheet } from '../components/AccountSwitchSheet';
 import { HomeHeader } from '../components/HomeHeader';
+import { IconTabBar } from '../components/IconTabBar';
 
 export function HomeTabs({ role }) {
   const t = useTranslation();
   const router = useRouter();
   const { user, notice, loginSucceeded, dismissLoginSuccess } = useSession();
   const { colorScheme } = useColorScheme();
-  const theme = THEME[colorScheme ?? 'light'];
   const isParent = role === 'parent';
   const inbox = useNotificationInbox();
   const accounts = useAccounts();
@@ -117,15 +115,8 @@ export function HomeTabs({ role }) {
               onSettings={() => router.push('/settings')}
             />
           ),
-          tabBarActiveTintColor: theme.foreground,
-          tabBarInactiveTintColor: theme.mutedForeground,
-          tabBarLabelStyle: { fontSize: 11, fontFamily: FONT_FAMILY.sans.medium },
-          tabBarStyle: {
-            backgroundColor: theme.background,
-            borderTopColor: theme.border,
-            paddingTop: 4,
-          },
-        }}>
+        }}
+        tabBar={(props) => <IconTabBar {...props} colorScheme={colorScheme} />}>
         <Tabs.Screen
           name={isParent ? 'child-profile' : 'overview'}
           options={{
