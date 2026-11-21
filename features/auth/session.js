@@ -380,7 +380,11 @@ async function removeSession(id, { revoke = true, notice = '' } = {}) {
     await refreshing.get(id)?.catch(() => {});
     if (revoke && entry?.pair) {
       try {
-        await withAccountSession(id, (access) => removePushForSession(entry.account, access));
+        await removePushForSession(
+          entry.account,
+          entry.pair.accessToken,
+          entry.pair.refreshToken
+        );
       } catch {
         notice = PUSH_REMOVAL_NOTICE;
       }
@@ -438,7 +442,11 @@ export function revokeAllSessionsAndSignOut() {
     let pushRemoved = true;
     setPushRegistrationPaused(entry?.account, true);
     try {
-      await removePushForSession(entry?.account, entry?.pair?.accessToken).catch(() => {
+      await removePushForSession(
+        entry?.account,
+        entry?.pair?.accessToken,
+        entry?.pair?.refreshToken
+      ).catch(() => {
         pushRemoved = false;
       });
       if (version !== expectedVersion) throw new CanceledError();
