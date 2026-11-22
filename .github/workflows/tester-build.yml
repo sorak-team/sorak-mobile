@@ -1,0 +1,216 @@
+# ──────────────────────────────────────────────────────────────
+# Build Tester (Android APK & iOS IPA)
+# Triggers on push to release/tester or manual dispatch.
+# ──────────────────────────────────────────────────────────────
+name: Build Tester (Android APK & iOS IPA)
+
+on:
+  push:
+    branches:
+      - 'release/tester'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ═══════════════════════════════════════════════════════════════
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # ANDROID APK
+  # ─────────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://test2mamnonhontre.sorak.io.vn/api' }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      # ── Gradle cache (saves ~3-5 min on repeat builds) ──
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo Prebuild (Android)
+        run: npx expo prebuild --platform android --clean
+
+      - name: Expo Doctor Check
+        run: npx expo-doctor || true
+
+      # ── Build APK: arm64 + armv7 + x86_64 (physical devices + PC emulators) ──
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64 \
+            --no-daemon \
+            --build-cache \
+            -Dorg.gradle.parallel=true \
+            -Dorg.gradle.workers.max=4
+
+      - name: Sign & Package Tester APK
+        run: |
+          set -euo pipefail
+          APK_NAME="sorak-android-${{ github.sha }}.apk"
+
+          RELEASE_APK="$(find android/app/build/outputs/apk/release -name '*.apk' | head -n 1 || true)"
+          if [ -n "$RELEASE_APK" ]; then
+            if [[ "$RELEASE_APK" == *"unsigned"* ]]; then
+              echo "Signing unsigned release APK with tester keystore..."
+              keytool -genkey -v -keystore tester.keystore \
+                -alias androidtester -keyalg RSA -keysize 2048 -validity 10000 \
+                -storepass android -keypass android \
+                -dname "CN=Sorak Tester, OU=QA, O=Sorak, L=HCM, ST=HCM, C=VN"
+
+              BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -maxdepth 1 -type d | sort -V | tail -n 1)
+              $BUILD_TOOLS_DIR/apksigner sign \
+                --ks tester.keystore \
+                --ks-pass pass:android \
+                --key-pass pass:android \
+                --out "$APK_NAME" \
+                "$RELEASE_APK"
+            else
+              cp "$RELEASE_APK" "$APK_NAME"
+            fi
+          else
+            echo "No release APK found, falling back to debug..."
+            DEBUG_APK="$(find android/app/build/outputs/apk/debug -name '*.apk' | head -n 1)"
+            cp "$DEBUG_APK" "$APK_NAME"
+          fi
+
+          echo "Prepared APK: $APK_NAME"
+          ls -lh "$APK_NAME"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sorak-android-${{ github.sha }}
+          path: sorak-android-${{ github.sha }}.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────
+  # iOS IPA (Unsigned for Sideloadly)
+  # ─────────────────────────────────────────────────────────────
+  build-ios:
+    name: Build iOS IPA (Unsigned for Sideloadly)
+    # ── macos-26 ships Xcode 26 with Swift 6.2 ──
+    # expo-modules-jsi requires swift-tools-version: 6.2
+    # macos-14 only has up to Xcode 16.2 (Swift 6.0) → fails
+    # macos-15 only has up to Xcode 16.4 (Swift 6.0) → fails
+    runs-on: macos-26
+    env:
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL || 'https://test2mamnonhontre.sorak.io.vn/api' }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Verify Xcode & Swift versions
+        run: |
+          xcodebuild -version
+          swift --version
+          echo "Swift tools version 6.2 requirement: ✓ (Xcode 26 on macos-26)"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Expo Prebuild (iOS)
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      # ── Scheme is hardcoded to 'sorakrnr' ──
+      # expo prebuild generates the Xcode project with scheme name
+      # derived from the slug in app.json ("sorak-rnr" → "sorakrnr").
+      # Previous attempts used schemes[0] which picked "EXConstants".
+      - name: Build Xcode Release (Unsigned)
+        run: |
+          cd ios
+          WORKSPACE="$(find . -name '*.xcworkspace' -maxdepth 1 | head -n 1)"
+          SCHEME="sorakrnr"
+
+          echo "── Available schemes ──"
+          xcodebuild -workspace "$WORKSPACE" -list || true
+          echo "── Building: workspace=$WORKSPACE scheme=$SCHEME ──"
+
+          xcodebuild -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            clean build
+
+      - name: Package Unsigned IPA (Payload/*.app)
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find ios/build/Build/Products/Release-iphoneos -name '*.app' -type d | head -n 1 || true)"
+          if [ -z "$APP_PATH" ]; then
+            echo "Searching across build directory..."
+            APP_PATH="$(find ios/build -name '*.app' -type d | grep -v 'Intermediates' | head -n 1)"
+          fi
+
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::No .app bundle found under ios/build"
+            find ios/build -maxdepth 5 -type d || true
+            exit 1
+          fi
+
+          echo "Packaging: $APP_PATH"
+          STAGE="$(mktemp -d)"
+          mkdir -p "$STAGE/Payload"
+          cp -R "$APP_PATH" "$STAGE/Payload/"
+
+          IPA_NAME="sorak-ios-${{ github.sha }}.ipa"
+          (
+            cd "$STAGE"
+            zip -qry "$GITHUB_WORKSPACE/$IPA_NAME" Payload
+          )
+
+          ls -lh "$GITHUB_WORKSPACE/$IPA_NAME"
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: sorak-ios-${{ github.sha }}
+          path: sorak-ios-${{ github.sha }}.ipa
+          if-no-files-found: error
+          retention-days: 14

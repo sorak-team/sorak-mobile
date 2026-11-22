@@ -96,3 +96,16 @@ Yêu cầu: Node.js 20 trở lên, Android Studio (Android SDK, máy ảo hoặc
 ### Thông báo đẩy
 
 Push chỉ hoạt động trên bản build (không chạy trong Expo Go, web hoặc máy ảo iOS). Expo project ID đã có trong `app.json`. Android dùng cấu hình Firebase trong `google-services.json`. Có thể đổi hai giá trị này bằng `EAS_PROJECT_ID` và `GOOGLE_SERVICES_JSON` trong `.env.local` (xem `.env.example`).
+
+
+## Phát hành và Bản cài đặt thử nghiệm (CI/CD)
+
+Ứng dụng được thiết lập quy trình tự động build qua GitHub Actions trên nhánh `release/tester`:
+
+- **Android (.apk)**: Được build ở chế độ Release, tự động ký với tester keystore (`sorak-android-<sha>.apk`). Có thể cài đặt trực tiếp trên thiết bị Android thật hoặc trình giả lập.
+- **iOS (.ipa)**: Được đóng gói dạng Unsigned (`sorak-ios-<sha>.ipa`). Người dùng có thể sử dụng công cụ [Sideloadly](https://sideloadly.io/) để ký tạm thời và cài lên thiết bị iPhone/iPad.
+
+### Hướng dẫn tải bản cài:
+1. Truy cập tab **Actions** trên repository GitHub: [sorak-team/sorak-mobile/actions](https://github.com/sorak-team/sorak-mobile/actions).
+2. Chọn workflow run mới nhất thuộc nhánh `release/tester`.
+3. Kéo xuống mục **Artifacts** ở cuối trang để tải về file `.apk` hoặc `.ipa` tương ứng.
