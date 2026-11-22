@@ -49,11 +49,12 @@ export function registerPushForSession(user, device, isCurrent, register = regis
   });
 }
 
-export async function removePushForSession(user, accessToken, refreshToken) {
-  if ((Platform.OS !== 'android' && Platform.OS !== 'ios') || !user?.id || (!accessToken && !refreshToken)) return;
+export async function removePushForSession(user, pair) {
+  if ((Platform.OS !== 'android' && Platform.OS !== 'ios') || !user?.id || !pair?.refreshToken)
+    return;
   await pendingRegistration?.catch(() => {});
   const deviceToken = await readPushToken(user.id);
   if (!deviceToken) return;
-  await unregisterPushDevice(deviceToken, accessToken, refreshToken);
+  await unregisterPushDevice(deviceToken, pair);
   await clearPushToken(user.id);
 }
