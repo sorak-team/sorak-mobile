@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
+import { statusBadgeVariant } from '@/lib/status-badge';
 import { useLocale, useTranslation } from '@/shared/i18n/useLanguage';
 
 import {
@@ -9,6 +10,7 @@ import {
   formatDate,
   measurement,
 } from '../utils/report-format';
+import { heightForAge, recordedByLabel, weightStatus } from '../utils/growth-evaluation';
 import { ReportFields } from './ReportFields';
 
 const MONO = { mono: true };
@@ -24,7 +26,17 @@ export function ReportRecord({ section, record }) {
         fields={[
           ['Chiều cao', t(measurement(record.height, 'cm', locale)), MONO],
           ['Cân nặng', t(measurement(record.weight, 'kg', locale)), MONO],
-          ...(record.notes ? [['Ghi chú', record.notes]] : []),
+          ...(Number.isFinite(Number(record.bmi)) && Number(record.bmi) > 0
+            ? [['BMI', Number(record.bmi).toLocaleString(locale), MONO]]
+            : []),
+          ['Chiều cao / Tuổi', <GrowthBadge evaluation={heightForAge(record)} />],
+          ['Cân nặng / Thể trạng', <GrowthBadge evaluation={weightStatus(record)} />],
+          // Chỉ hiện ghi chú khi backend có; không tự điền câu mặc định như web.
+          ...(record.notes ? [['Ghi chú y tế', record.notes]] : []),
+          [
+            'Người ghi nhận',
+            recordedByLabel(record.recordedBy) && t(recordedByLabel(record.recordedBy)),
+          ],
         ]}
       />
     );
@@ -32,7 +44,12 @@ export function ReportRecord({ section, record }) {
     return (
       <ReportFields
         title={dateLabel(record.date)}
-        badge={<ResultBadge text={t(attendanceStatus(record.status))} />}
+        badge={
+          <ResultBadge
+            text={t(attendanceStatus(record.status))}
+            variant={statusBadgeVariant('attendance', record.status)}
+          />
+        }
         fields={[
           ['Có mặt', record.checkInTime, MONO],
           ['Đón về', record.checkOutTime, MONO],
@@ -52,7 +69,12 @@ export function ReportRecord({ section, record }) {
     return (
       <ReportFields
         title={record.activityTitle || t('Hoạt động giáo dục')}
-        badge={<ResultBadge text={t(assessmentStatus(record.status))} />}
+        badge={
+          <ResultBadge
+            text={t(assessmentStatus(record.status))}
+            variant={statusBadgeVariant('assessment', record.status)}
+          />
+        }
         fields={[
           ['Ngày', dateLabel(record.date)],
           ['Hoạt động', record.routineSlotLabel],
@@ -65,7 +87,12 @@ export function ReportRecord({ section, record }) {
   return (
     <ReportFields
       title={record.pickupPersonName || t('Người được ủy quyền')}
-      badge={<ResultBadge text={t(authorizationStatus(record.status))} />}
+      badge={
+        <ResultBadge
+          text={t(authorizationStatus(record.status))}
+          variant={statusBadgeVariant('authorization', record.status)}
+        />
+      }
       fields={[
         ['Quan hệ', record.relationship],
         ['Số điện thoại', record.pickupPersonPhone, MONO],
@@ -77,9 +104,25 @@ export function ReportRecord({ section, record }) {
   );
 }
 
-function ResultBadge({ text }) {
+const TONE_VARIANT = { danger: 'destructive', warn: 'outline', info: 'secondary', ok: 'secondary' };
+
+// Nhãn đánh giá WHO; thiếu z-score thì ghi rõ chưa có thông tin, không mặc định "Đạt chuẩn".
+function GrowthBadge({ evaluation }) {
+  const t = useTranslation();
+  if (!evaluation)
+    return (
+      <Text className="text-xs leading-5 text-muted-foreground">{t('Chưa có thông tin')}</Text>
+    );
   return (
-    <Badge variant="secondary">
+    <Badge variant={TONE_VARIANT[evaluation.tone]}>
+      <Text>{t(evaluation.label)}</Text>
+    </Badge>
+  );
+}
+
+function ResultBadge({ text, variant }) {
+  return (
+    <Badge variant={variant}>
       <Text>{text}</Text>
     </Badge>
   );
