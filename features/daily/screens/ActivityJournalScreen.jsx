@@ -1,6 +1,8 @@
 import { CircleCheck, Sun } from 'lucide-react-native';
-import { ActivityIndicator, FlatList, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 
+import { LoadingSkeleton } from '@/components/shared/LoadingSkeleton';
+import { usePullToRefresh } from '@/components/shared/usePullToRefresh';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,6 +23,7 @@ const SLOT_STATUS = {
 export default function ActivityJournalScreen() {
   const t = useTranslation();
   const { query, studentId } = useActivityJournal();
+  const pull = usePullToRefresh(studentId ? () => query.refetch() : undefined);
   const { studentName, entries = [] } = query.data ?? {};
   const done = entries.filter((item) => item.isDone).length;
   const ready = Boolean(studentId && query.isSuccess && entries.length);
@@ -31,8 +34,8 @@ export default function ActivityJournalScreen() {
       contentContainerClassName="mx-auto w-full max-w-xl px-4 py-4"
       data={query.isError || !studentId ? [] : entries}
       keyExtractor={(item) => String(item.id)}
-      refreshing={query.isRefetching}
-      onRefresh={studentId ? () => query.refetch() : undefined}
+      refreshing={pull.refreshing}
+      onRefresh={pull.onRefresh}
       ListHeaderComponent={
         <Card className="mb-4 gap-2.5 px-4 py-3.5">
           <View className="flex-row items-center justify-between gap-2">
@@ -60,7 +63,7 @@ export default function ActivityJournalScreen() {
       }
       ListEmptyComponent={
         studentId && query.isPending ? (
-          <ActivityIndicator className="py-10" accessibilityLabel={t('Đang tải nhật ký')} />
+          <LoadingSkeleton variant="cards" rows={4} label={t('Đang tải nhật ký')} />
         ) : (
           <View className="items-center gap-3 rounded-2xl border border-dashed border-border px-5 py-8">
             <Text className="text-center text-sm text-muted-foreground">

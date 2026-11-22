@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CalendarOff } from 'lucide-react-native';
 import { ScrollView, View } from 'react-native';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,12 +11,15 @@ import { cn } from '@/lib/utils';
 import { useLocale, useTranslation } from '@/shared/i18n/useLanguage';
 
 import { ChildDayResults } from '../components/ChildDayResults';
+import { DateHeader } from '../components/DateHeader';
 import { ScheduleState } from '../components/ScheduleState';
+import { usePrefetchDailyRecords } from '../hooks/useDailyRecords';
 import { useTimetable } from '../hooks/useTimetable';
-import { dayTitle, schoolToday } from '../utils/schedule-date';
+import { schoolToday, shortDate } from '../utils/schedule-date';
 import {
   childDayResults,
   dayActivities,
+  dayCalendar,
   dayFrames,
   routineTitle,
   timetableError,
@@ -38,6 +43,16 @@ export default function ScheduleActivityScreen() {
         item.activities.some((slot) => slot.id === activity.id)
       )
     : null;
+  // Slot đã sắp vẫn xem được trong ngày nghỉ nhưng không đánh giá.
+  const holiday = activity ? dayCalendar(data, date, isParent).lock : null;
+  const canAssess = date === schoolToday() && !holiday;
+  // Tải sẵn danh sách đánh giá của hoạt động để bấm "Đánh giá" là mở ngay.
+  usePrefetchDailyRecords({
+    date,
+    kinds: ['assessment'],
+    slot: activity,
+    enabled: Boolean(activity) && !isParent,
+  });
   return (
     <ScrollView
       className="flex-1 bg-background"
@@ -45,6 +60,7 @@ export default function ScheduleActivityScreen() {
       {error || noClass || query.isPending || query.isError || !activity ? (
         <ScheduleState
           loading={!error && !noClass && query.isPending}
+          skeleton="cards"
           error={error || (query.isError ? timetableError(query.error) : '')}
           onRetry={query.isError ? query.refetch : undefined}
           title={noClass ? 'Chưa được phân công lớp' : 'Không tìm thấy hoạt động trong ngày này'}
@@ -52,8 +68,18 @@ export default function ScheduleActivityScreen() {
         />
       ) : (
         <>
+          <DateHeader
+            date={date}
+            tone={holiday ? 'locked' : date === schoolToday() ? 'today' : 'past'}
+            badges={
+              holiday
+                ? [[t('Ngày nghỉ'), 'destructive']]
+                : date === schoolToday()
+                  ? [[t('Hôm nay'), 'secondary']]
+                  : []
+            }
+          />
           <View className="gap-2">
-            <Text className="text-xs text-muted-foreground">{dayTitle(date, locale)}</Text>
             <Text className="text-lg font-semibold leading-6 tracking-tight">
               {activity.title || t('Hoạt động chưa có tên')}
             </Text>
@@ -68,13 +94,25 @@ export default function ScheduleActivityScreen() {
                   <Text>{[frame.start, frame.end].filter(Boolean).join('–')}</Text>
                 </Badge>
               ) : null}
-              {activity.status ? (
+              {activity.status === 'Đã hoàn thành' ? (
                 <Badge variant="outline">
                   <Text>{t(activity.status)}</Text>
                 </Badge>
               ) : null}
             </View>
           </View>
+          {holiday ? (
+            <Alert icon={CalendarOff}>
+              <AlertDescription className="text-xs">
+                {t('Ngày nghỉ: {name}. Không ghi nhận trong ngày nghỉ.', {
+                  name: holiday.name || t('Ngày nghỉ'),
+                })}
+                {holiday.makeupDate
+                  ? ` ${t('Lịch dạy được bù vào Thứ Bảy {date}.', { date: shortDate(holiday.makeupDate, locale) })}`
+                  : ''}
+              </AlertDescription>
+            </Alert>
+          ) : null}
           <Card className="gap-0 py-0">
             {[
               [t('Mục tiêu giáo dục'), activity.goal],
@@ -110,7 +148,8 @@ export default function ScheduleActivityScreen() {
                 })
               }>
               <Text>
-                {date > schoolToday() ? t('Xem đánh giá học sinh') : t('Đánh giá học sinh')}
+                {/* Đánh giá chỉ làm trong ngày của slot và không làm trong ngày nghỉ; còn lại chỉ xem. */}
+                {canAssess ? t('Đánh giá') : t('Xem đánh giá')}
               </Text>
             </Button>
           ) : null}
