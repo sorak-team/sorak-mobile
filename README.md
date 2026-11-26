@@ -1,111 +1,149 @@
-# Sorak Mobile
+# sorak-mobile
 
-Ứng dụng di động của hệ thống quản lý Trường Mầm non Sorak, dành cho **giáo viên** và **phụ huynh**. Ban giám hiệu dùng bản web. App dùng chung backend với bản web, và quyền của từng tài khoản do backend quyết định.
+Mobile client application for the Sorak preschool management platform. Provides dedicated mobile interfaces for educators and parents with real-time push notifications, daily classroom routine tracking, and offline-resilient data caching.
 
-## Tính năng
+## Architecture
 
-**Giáo viên** (phụ trách một lớp):
+The application is structured around a domain-driven feature architecture with file-based routing and atomic UI primitives:
 
-- Tổng quan lớp: sĩ số, điểm danh, sức khỏe, đón trẻ trong ngày; hồ sơ, biểu đồ tăng trưởng (WHO) và báo cáo từng bé.
-- Thời khóa biểu theo tuần. Ghi nhận trong ngày: điểm danh, số đo sức khỏe, đón trẻ, đánh giá từng hoạt động giáo dục.
-- Kết quả học tập của cả lớp (Sổ bé ngoan theo tuần/tháng, kết quả học kỳ) dạng bảng, có tìm kiếm và lọc theo trạng thái.
-- Ủy quyền đón trẻ: duyệt hoặc từ chối đơn của phụ huynh, tạo đơn đã duyệt.
+- **`app/`**: Expo Router file-based route definitions, root layout providers, role navigation groups (`(teacher)`, `(parent)`), and auth screens.
+- **`features/`**: Domain-isolated business modules (auth, daily, attendance, pickup, assessment, health, report, notification).
+- **`components/ui/`**: Base UI component primitives built with React Native Reusables (RNR) and NativeWind.
+- **`components/shared/`**: Cross-module composite components including data tables, calendars, action sheets, and filter bars.
+- **`shared/`**: Network client (Axios with automated token refresh), secure token storage, utility hooks, and i18n dictionaries.
 
-**Phụ huynh** (mỗi tài khoản gắn với một bé):
+## Tech Stack
 
-- Hồ sơ trẻ: thông tin, sức khỏe, điểm danh, đánh giá hoạt động theo học kỳ.
-- Thời khóa biểu (chỉ xem) và nhật ký hoạt động ở trường.
-- Sổ bé ngoan, gửi phản hồi cho giáo viên; kết quả học kỳ đã công bố.
-- Tạo và hủy đơn ủy quyền đón con, kèm ảnh người đón.
-- Thêm nhiều tài khoản (mỗi bé một tài khoản) và chuyển qua lại trên cùng máy.
+- **Runtime & Framework**: React Native 0.86, React 19, Expo SDK 57 (Expo Router)
+- **Styling**: NativeWind 4 (Tailwind CSS 3.4), Lucide React Native
+- **UI Primitives**: React Native Reusables (RNR - shadcn pattern for React Native)
+- **State Management & Caching**: TanStack Query (React Query) 5, Zustand 5
+- **Networking**: Axios with request retry queue and token synchronization
+- **Storage & Security**: Expo SecureStore (encrypted auth tokens), AsyncStorage (app preferences)
+- **Notifications**: Expo Notifications with Firebase Cloud Messaging (FCM)
+- **Lists & Gestures**: Shopify FlashList, React Native Gesture Handler, Gorhom Bottom Sheet
+- **Internationalization**: Bilingual support (Vietnamese and English)
 
-**Chung:**
+## Role Portals
 
-- Đăng nhập, xác thực hai lớp (OTP), đổi mật khẩu, quản lý phiên đăng nhập trên các thiết bị.
-- Hộp thông báo chia hai tab Bản tin trường / Hoạt động lớp; thông báo đẩy (push). Bấm vào push sẽ mở đúng tài khoản của bé.
-- Giao diện sáng/tối/tự động; tiếng Việt và tiếng Anh.
+- **Teacher**: Homeroom classroom overview, student roster, daily attendance check-ins, routine timetable schedules, health measurements, daily educational rubric scoring, weekly achievement flower badges, semester progress books, and authorized pickup request approvals.
+- **Parent**: Real-time student activity feed, daily meal menus, attendance logs, absence leave requests, authorized pickup delegation with guardian photo capture, WHO growth percentile curves, semester assessment reports, and multi-child account switching on a single device.
+- **Common Services**: Two-factor authentication (OTP), password recovery, device session management, notification inbox with tabbed news/activities, push notifications with account auto-switching, dark/light theme switching, and bilingual localization.
 
-## Công nghệ
+## Project Structure
 
-| Phần       | Thư viện                                                                                      |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| Nền tảng   | Expo SDK 57, React Native 0.86, JavaScript (JSX)                                              |
-| Điều hướng | Expo Router: tab riêng cho từng vai trò, Stack cho màn chi tiết                               |
-| Giao diện  | React Native Reusables (RNR), NativeWind 4 (Tailwind CSS), Lucide icons                       |
-| Dữ liệu    | TanStack Query (dữ liệu từ server, cache), Axios (HTTP), Zustand (trạng thái phiên trong RAM) |
-| Lưu trữ    | Expo SecureStore (token đăng nhập), AsyncStorage (tùy chọn giao diện, ngôn ngữ)               |
-| Thông báo  | Expo Notifications (Expo Push Token)                                                          |
-
-## Cấu trúc thư mục
-
-```text
-app/                  Route của Expo Router: layout, phân quyền theo vai trò, màn mỏng chỉ export screen
-  (teacher)/          Nhóm màn của giáo viên
-  (parent)/           Nhóm màn của phụ huynh
-  auth/, settings/    Đăng nhập và cài đặt
-features/<tính năng>/ Mã theo nghiệp vụ: auth, home, daily, report, assessment, pickup, notification, settings
-  screens/            Màn hình: bố cục, sự kiện, điều hướng
-  components/         Giao diện riêng của tính năng, nhận dữ liệu qua props
-  hooks/              Query/mutation và điều phối thao tác
-  api/                Gọi endpoint, kiểm tra và chuyển đổi response
-  utils/, store/      Hàm thuần và state Zustand của tính năng
-components/ui/        Component nền RNR (Button, Card, Badge, Input…)
-components/shared/    Component ghép dùng chung (bảng dữ liệu, lịch, bộ lọc…)
-shared/api/           Axios client chung, xử lý phiên và làm mới token
-shared/storage/       Lớp bọc SecureStore/AsyncStorage
-shared/i18n/          Bản dịch tiếng Anh
-assets/images/        Ảnh minh họa
+```
+sorak-mobile/
+├── app/                     # Expo Router routes and role layout groups
+│   ├── (parent)/            # Parent portal navigation tabs and views
+│   ├── (teacher)/           # Teacher portal navigation tabs and views
+│   ├── auth/                # Login, 2FA OTP verification, password recovery
+│   └── settings/            # Appearance, language, sessions, legal documents
+├── assets/                  # Brand illustrations, custom fonts, and splash assets
+├── components/
+│   ├── shared/              # Composite shared components (calendar, tables, sheets)
+│   └── ui/                  # Reusable RNR primitives (Button, Card, Badge, Input, etc.)
+├── features/                # Domain-driven feature modules
+│   ├── assessment/          # Evaluations, rubrics, and semester progress books
+│   ├── attendance/          # Daily check-in/out and absence tracking
+│   ├── auth/                # Authentication client, schemas, and session hooks
+│   ├── daily/               # Daily routines, timetables, and classroom logs
+│   ├── health/              # Health vitals, WHO percentile curves, and advisory
+│   ├── home/                # Role-specific dashboard overviews
+│   ├── notification/        # Push notifications, inbox, and school news
+│   ├── pickup/              # Pickup delegation requests and guardian verification
+│   └── report/              # Class overviews and student progress summaries
+├── shared/
+│   ├── api/                 # Axios HTTP client and interceptors
+│   ├── hooks/               # Global utility hooks (appearance, responsive)
+│   ├── i18n/                # Localization translation dictionaries (vi, en)
+│   └── storage/             # SecureStore and AsyncStorage wrapper abstractions
+├── app.json                 # Expo application configuration and EAS settings
+├── babel.config.js          # Babel presets and NativeWind configuration
+├── package.json
+└── tailwind.config.js       # Design tokens and theme customization
 ```
 
-## Cài đặt và chạy
+## Getting Started
 
-Yêu cầu: Node.js 20 trở lên, Android Studio (Android SDK, máy ảo hoặc điện thoại bật USB debugging). Chạy trên iOS cần máy Mac có Xcode.
+### Prerequisites
 
-1. Cài thư viện theo lockfile:
+- Node.js 20+ (Node.js 22 LTS recommended)
+- npm 10+
+- Android Studio (Android SDK & Build Tools, Android Virtual Device or USB-debugging device)
+- macOS with Xcode (optional, required for iOS development)
 
+### Installation & Setup
+
+1. Clone the repository and enter the directory:
+   ```bash
+   git clone https://github.com/sorak-team/sorak-mobile.git
+   cd sorak-mobile
+   ```
+
+2. Configure environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Set the API backend URL in `.env.local`:
+   ```env
+   EXPO_PUBLIC_API_URL=https://test2mamnonhontre.sorak.io.vn/api
+   ```
+   > **Note:** Variables prefixed with `EXPO_PUBLIC_` are bundled into the client application. Do not store sensitive secrets or private API keys in this file.
+
+3. Install dependencies:
    ```bash
    npm ci
    ```
 
-2. Tạo file cấu hình môi trường từ mẫu (file này không đưa lên Git):
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   `EXPO_PUBLIC_API_URL` trỏ tới server thử nghiệm `https://test2mamnonhontre.sorak.io.vn/api`. Biến có tiền tố `EXPO_PUBLIC_` được đóng vào app, vì vậy không đặt mật khẩu hay token trong file này.
-
-3. Build và chạy bản phát triển trên Android:
-
+4. Build and run development client on Android:
    ```bash
    npx expo run:android
    ```
+   This prebuilds the native `android/` directory and installs the debug APK on your emulator or connected device. Because the application utilizes native modules (push notifications, camera/image picker, secure storage), a custom development build is required instead of standard Expo Go.
 
-   Lệnh này tạo thư mục `android/`, build app rồi cài lên máy ảo hoặc điện thoại. App dùng một số module native (thông báo đẩy, bàn phím, chọn ảnh), nên cần bản build này thay cho Expo Go.
-
-4. Những lần sau chỉ cần khởi động Metro:
-
+5. For subsequent development sessions, start the Metro bundler:
    ```bash
    npm run dev
    ```
+   Launch the installed app on your device, and it will connect to the Metro server with Fast Refresh.
 
-   Mở app đã cài trên máy, app sẽ tải mã từ Metro. Sau khi đổi `.env.local`, khởi động lại Metro.
+## Available Scripts
 
-Đăng nhập bằng tài khoản giáo viên hoặc phụ huynh mà nhà trường cấp trên server thử nghiệm. Tài khoản Ban giám hiệu sẽ được hướng dẫn dùng bản web.
+- `npm run dev`: Starts the Metro development server with cache cleared (`expo start -c`).
+- `npm run android`: Starts Metro and launches the app on an Android device or emulator.
+- `npm run ios`: Starts Metro and launches the app on an iOS simulator (macOS only).
+- `npm run web`: Starts the experimental web preview.
+- `npm run clean`: Cleans Metro cache and `node_modules/`.
 
-### Thông báo đẩy
+## Default Accounts
 
-Push chỉ hoạt động trên bản build (không chạy trong Expo Go, web hoặc máy ảo iOS). Expo project ID đã có trong `app.json`. Android dùng cấu hình Firebase trong `google-services.json`. Có thể đổi hai giá trị này bằng `EAS_PROJECT_ID` và `GOOGLE_SERVICES_JSON` trong `.env.local` (xem `.env.example`).
+Use the following accounts (password: `Sorak@2026`) to access different role views on the testing server:
 
+| Role | Username | Accessible View |
+| :--- | :--- | :--- |
+| Teacher (Primary) | `CB24001` | Homeroom roster, attendance, timetable, health logs, pickup review |
+| Teacher (Assistant) | `CB25001` | Assistant educator routine overview and activity evaluations |
+| Parent | `HS26001` | Parent portal feed, attendance logs, leave requests, pickup delegation |
 
-## Phát hành và Bản cài đặt thử nghiệm (CI/CD)
+*(Note: Administrator and Principal accounts (`ADMIN01`) use the web portal at [sorak-web](https://github.com/sorak-team/sorak-web)).*
 
-Ứng dụng được thiết lập quy trình tự động build qua GitHub Actions trên nhánh `release/tester`:
+## Push Notifications & Native Build
 
-- **Android (.apk)**: Được build ở chế độ Release, tự động ký với tester keystore (`sorak-android-<sha>.apk`). Có thể cài đặt trực tiếp trên thiết bị Android thật hoặc trình giả lập.
-- **iOS (.ipa)**: Được đóng gói dạng Unsigned (`sorak-ios-<sha>.ipa`). Người dùng có thể sử dụng công cụ [Sideloadly](https://sideloadly.io/) để ký tạm thời và cài lên thiết bị iPhone/iPad.
+Push notification delivery requires an active development build or standalone release binary:
 
-### Hướng dẫn tải bản cài:
-1. Truy cập tab **Actions** trên repository GitHub: [sorak-team/sorak-mobile/actions](https://github.com/sorak-team/sorak-mobile/actions).
-2. Chọn workflow run mới nhất thuộc nhánh `release/tester`.
-3. Kéo xuống mục **Artifacts** ở cuối trang để tải về file `.apk` hoặc `.ipa` tương ứng.
+- **Expo Push Token**: Configured via `EAS_PROJECT_ID` in `.env.local` or `app.json`.
+- **Android Firebase (FCM)**: Configured via `google-services.json` at project root or referenced via `GOOGLE_SERVICES_JSON` in `.env.local`.
+- Notification taps feature automated role/child account switching and direct deep linking into target screens.
+
+## Continuous Integration & Release Builds (CI/CD)
+
+The application features an automated build workflow orchestrated via GitHub Actions on the `release/tester` branch:
+
+- **Android (.apk)**: Built in Release mode, automatically signed with the tester keystore (`sorak-android-<sha>.apk`). Can be installed directly onto physical Android devices or emulators.
+- **iOS (.ipa)**: Packaged as an unsigned binary (`sorak-ios-<sha>.ipa`). Users can utilize [Sideloadly](https://sideloadly.io/) or equivalent tools to sign and install on physical iPhone/iPad devices.
+
+### Download Instructions:
+1. Navigate to the **Actions** tab on GitHub: [sorak-team/sorak-mobile/actions](https://github.com/sorak-team/sorak-mobile/actions).
+2. Select the latest completed workflow run on the `release/tester` branch.
+3. Scroll down to the **Artifacts** section to download the respective `.apk` or `.ipa` archive.
